@@ -11,7 +11,9 @@
     "check": "node --check src/index.js && node --check bin/repo-to-content.js",
     "smoke": "node bin/repo-to-content.js fixtures/sample-repo --format markdown",
     "smoke:json": "node bin/repo-to-content.js fixtures/sample-repo --format json",
-    "build": "npm run check && npm test"
+    "build": "npm run check && npm test",
+    "package:smoke": "npm pack --dry-run",
+    "release:check": "npm run check && npm test && npm run smoke && npm run smoke:json && npm run package:smoke"
   },
   "keywords": [
     "agents",
@@ -22,7 +24,25 @@
   ],
   "author": "Roger Chappel",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rogerchappel/repo-to-content-skill.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rogerchappel/repo-to-content-skill/issues"
+  },
+  "homepage": "https://github.com/rogerchappel/repo-to-content-skill#readme",
   "engines": {
     "node": ">=20"
-  }
+  },
+  "files": [
+    "bin",
+    "src",
+    "fixtures",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md"
+  ]
 }
