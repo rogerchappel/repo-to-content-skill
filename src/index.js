@@ -115,6 +115,7 @@ function buildWarnings({ readme, tests, scripts }) {
   if (!readme) warnings.push('README evidence missing; avoid usage claims until documented.');
   if (tests.length === 0) warnings.push('No test evidence found; avoid reliability claims.');
   if (!scripts.smoke) warnings.push('No smoke script found; demo command may need manual confirmation.');
+  if (scripts.publish) warnings.push('Publish script found; do not run external release actions from this workflow.');
   return warnings;
 }
 
