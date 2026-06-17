@@ -11,6 +11,7 @@ describe('repo-to-content', () => {
     const analysis = await analyzeRepo(path.join(root, 'fixtures/sample-repo'));
     assert.equal(analysis.name, 'sample-tool');
     assert.equal(analysis.evidence.readme, true);
+    assert.equal(analysis.readiness, 3);
     assert.deepEqual(analysis.evidence.scripts.sort(), ['check', 'smoke', 'test']);
   });
 
