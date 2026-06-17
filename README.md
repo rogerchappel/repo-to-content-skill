@@ -25,6 +25,7 @@ The CLI writes the brief to stdout and warning counts to stderr. It does not pos
 - Demo commands based on package scripts.
 - Short and technical post drafts.
 - Warnings for missing README, tests, or smoke scripts.
+- A readiness score based on README, test, and smoke evidence.
 
 ## Safety notes
 
