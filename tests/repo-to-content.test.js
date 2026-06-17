@@ -28,4 +28,9 @@ describe('repo-to-content', () => {
     assert.match(markdown, /sample-tool launch brief/);
     assert.match(markdown, /npm run smoke/);
   });
+
+  it('keeps launch briefs local-only', async () => {
+    const brief = buildBrief(await analyzeRepo(path.join(root, 'fixtures/sample-repo')));
+    assert.deepEqual(brief.sideEffects, ['local-filesystem-read']);
+  });
 });
