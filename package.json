@@ -1,0 +1,27 @@
+{
+  "name": "repo-to-content-skill",
+  "version": "0.1.0",
+  "description": "Generate evidence-backed launch content briefs from local repositories.",
+  "type": "module",
+  "bin": {
+    "repo-to-content": "./bin/repo-to-content.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/index.js && node --check bin/repo-to-content.js",
+    "smoke": "node bin/repo-to-content.js fixtures/sample-repo --format markdown",
+    "build": "npm run check && npm test"
+  },
+  "keywords": [
+    "agents",
+    "content",
+    "oss",
+    "launch",
+    "dry-run"
+  ],
+  "author": "Roger Chappel",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
+}
