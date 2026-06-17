@@ -13,6 +13,7 @@ Run Repo To Content after a repository has passing local checks and before draft
 2. Run `repo-to-content <repo-dir> --format markdown`.
 3. Review warnings and remove unsupported claims.
 4. Ask for human approval before using drafts externally.
+5. Preserve warnings in handoff notes so reviewers can see unsupported areas.
 
 ## Side-effect boundary
 
