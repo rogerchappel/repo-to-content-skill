@@ -1,6 +1,7 @@
 {
   "name": "sample-tool",
   "version": "0.1.0",
+  "type": "module",
   "description": "A sample local CLI with evidence-backed docs.",
   "scripts": {
     "test": "node --test",
