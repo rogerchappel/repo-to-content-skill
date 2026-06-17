@@ -25,3 +25,4 @@ bash scripts/validate.sh
 
 - Git history analysis is a later task.
 - Draft content still requires human approval before external use.
+- The first release focuses on Node-style package metadata.
