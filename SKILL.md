@@ -22,6 +22,8 @@ This workflow is dry-run only. It reads local repository files and writes draft 
 
 Human approval is required before using generated content externally or claiming verification that has not been run in the current repository.
 
+Never remove warnings just to make a draft look cleaner. Treat warnings as review prompts until the repository provides evidence.
+
 ## Examples
 
 ```bash
