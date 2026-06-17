@@ -23,13 +23,19 @@ export async function analyzeRepo(repoDir) {
     },
     claims: buildClaims({ packageJson, readme, docs, tests, scripts }),
     demoCommands: buildDemoCommands(scripts),
-    warnings: buildWarnings({ readme, tests, scripts })
+    warnings: buildWarnings({ readme, tests, scripts }),
+    readiness: scoreReadiness({ readme, tests, scripts })
   };
+}
+
+export function scoreReadiness({ readme, tests, scripts }) {
+  return [Boolean(readme), tests.length > 0, Boolean(scripts.smoke)].filter(Boolean).length;
 }
 
 export function buildBrief(analysis) {
   return {
     title: `${analysis.name} launch brief`,
+    generatedAt: new Date(0).toISOString(),
     summary: analysis.description || 'No package description found.',
     proofPaths: proofPaths(analysis),
     claims: analysis.claims,
@@ -39,6 +45,7 @@ export function buildBrief(analysis) {
       technical: draftTechnicalPost(analysis)
     },
     warnings: analysis.warnings,
+    readiness: analysis.readiness,
     sideEffects: ['local-filesystem-read']
   };
 }
@@ -47,7 +54,11 @@ export function toMarkdown(brief) {
   const lines = [
     `# ${brief.title}`,
     '',
+    `Generated: ${brief.generatedAt}`,
+    '',
     brief.summary,
+    '',
+    `Readiness: ${brief.readiness}/3`,
     '',
     '## Evidence',
     ...brief.proofPaths.map((item) => `- ${item}`),
