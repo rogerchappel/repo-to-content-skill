@@ -12,7 +12,7 @@
     "smoke": "node bin/repo-to-content.js fixtures/sample-repo --format markdown",
     "smoke:json": "node bin/repo-to-content.js fixtures/sample-repo --format json",
     "build": "npm run check && npm test",
-    "package:smoke": "npm pack --dry-run",
+    "package:smoke": "node scripts/package-smoke.js",
     "release:check": "npm run check && npm test && npm run smoke && npm run smoke:json && npm run package:smoke"
   },
   "keywords": [
@@ -39,6 +39,9 @@
     "bin",
     "src",
     "fixtures",
+    "docs",
+    "scripts",
+    "SKILL.md",
     "README.md",
     "LICENSE",
     "SECURITY.md",
