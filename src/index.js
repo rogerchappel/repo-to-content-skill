@@ -87,6 +87,9 @@ export async function runCli(argv, io) {
     io.stdout.write('Usage: repo-to-content <repo-dir> [--format json|markdown]\n');
     return;
   }
+  if (!['json', 'markdown'].includes(args.format)) {
+    throw new Error(`unsupported format "${args.format}"; expected json or markdown`);
+  }
   const analysis = await analyzeRepo(path.resolve(io.cwd, args.repoDir));
   const brief = buildBrief(analysis);
   io.stdout.write(args.format === 'json' ? `${JSON.stringify(brief, null, 2)}\n` : toMarkdown(brief));

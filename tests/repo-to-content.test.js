@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { analyzeRepo, buildBrief, toMarkdown } from '../src/index.js';
+import { analyzeRepo, buildBrief, runCli, toMarkdown } from '../src/index.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -32,5 +32,16 @@ describe('repo-to-content', () => {
   it('keeps launch briefs local-only', async () => {
     const brief = buildBrief(await analyzeRepo(path.join(root, 'fixtures/sample-repo')));
     assert.deepEqual(brief.sideEffects, ['local-filesystem-read']);
+  });
+
+  it('rejects unsupported CLI formats', async () => {
+    await assert.rejects(
+      () => runCli(['fixtures/sample-repo', '--format', 'html'], {
+        cwd: root,
+        stdout: { write() {} },
+        stderr: { write() {} }
+      }),
+      /unsupported format "html"/
+    );
   });
 });

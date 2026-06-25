@@ -17,6 +17,7 @@ repo-to-content <repo-dir> [--format json|markdown]
 ```
 
 The CLI writes the brief to stdout and warning counts to stderr. It does not post content or modify the repository.
+Unsupported output formats fail with a clear error instead of falling back to another renderer.
 
 ## Output
 
