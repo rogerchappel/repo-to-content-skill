@@ -33,4 +33,19 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-console.log(`package smoke passed; checked ${requiredFiles.length} required files`);
+const cliJson = spawnSync(process.execPath, ['bin/repo-to-content.js', 'fixtures/sample-repo', '--format', 'json'], {
+  encoding: 'utf8',
+});
+
+if (cliJson.status !== 0) {
+  process.stderr.write(cliJson.stderr);
+  process.exit(cliJson.status ?? 1);
+}
+
+const brief = JSON.parse(cliJson.stdout);
+if (brief.title !== 'sample-tool launch brief' || !Array.isArray(brief.proofPaths)) {
+  console.error('package smoke failed; CLI JSON output did not match expected brief shape');
+  process.exit(1);
+}
+
+console.log(`package smoke passed; checked ${requiredFiles.length} required files and CLI JSON output`);
