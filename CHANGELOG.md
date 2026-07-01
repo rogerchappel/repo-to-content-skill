@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add an installed-tarball smoke check so release verification covers the
+  packaged CLI binary after `npm install`.
 - Reject unsupported CLI output formats with an explicit error.
 - Extend package smoke coverage to parse the packaged CLI JSON output.
 

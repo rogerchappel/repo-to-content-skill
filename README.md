@@ -43,8 +43,11 @@ npm test
 npm run check
 npm run smoke
 npm run package:smoke
+npm run install:smoke
 npm run release:check
 bash scripts/validate.sh
 ```
 
 Use `npm run release:check` before publishing or opening a release PR.
+`npm run install:smoke` packs the tarball into a temporary project and runs the
+installed `repo-to-content --help` command.

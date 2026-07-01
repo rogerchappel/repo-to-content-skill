@@ -13,7 +13,8 @@
     "smoke:json": "node bin/repo-to-content.js fixtures/sample-repo --format json",
     "build": "npm run check && npm test",
     "package:smoke": "node scripts/package-smoke.js",
-    "release:check": "npm run check && npm test && npm run smoke && npm run smoke:json && npm run package:smoke"
+    "install:smoke": "node scripts/install-smoke.js",
+    "release:check": "npm run check && npm test && npm run smoke && npm run smoke:json && npm run package:smoke && npm run install:smoke"
   },
   "keywords": [
     "agents",
