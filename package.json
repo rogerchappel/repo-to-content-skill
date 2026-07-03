@@ -14,7 +14,8 @@
     "build": "npm run check && npm test",
     "package:smoke": "node scripts/package-smoke.js",
     "install:smoke": "node scripts/install-smoke.js",
-    "release:check": "npm run check && npm test && npm run smoke && npm run smoke:json && npm run package:smoke && npm run install:smoke"
+    "release:check": "npm run check && npm test && npm run smoke && npm run smoke:json && npm run package:smoke && npm run install:smoke",
+    "lint": "npm run check"
   },
   "keywords": [
     "agents",
