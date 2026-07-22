@@ -1,10 +1,12 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { lstat, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export async function analyzeRepo(repoDir) {
   const root = path.resolve(repoDir);
   const files = await listFiles(root);
-  const packageJson = await readJsonIfPresent(path.join(root, 'package.json'));
+  const packageJson = files.includes('package.json')
+    ? await readJsonIfPresent(path.join(root, 'package.json'))
+    : null;
   const readme = await readFirst(files, root, /^readme\.md$/i);
   const docs = files.filter((file) => file.startsWith('docs/'));
   const tests = files.filter((file) => /(^|\/)(test|tests|__tests__)\//.test(file) || /\.(test|spec)\./.test(file));
@@ -145,9 +147,10 @@ async function listFiles(root, prefix = '') {
   const files = [];
   for (const entry of entries) {
     const relative = path.join(prefix, entry);
-    const info = await stat(path.join(root, relative));
+    const info = await lstat(path.join(root, relative));
+    if (info.isSymbolicLink()) continue;
     if (info.isDirectory()) files.push(...await listFiles(root, relative));
-    else files.push(relative.replaceAll(path.sep, '/'));
+    else if (info.isFile()) files.push(relative.replaceAll(path.sep, '/'));
   }
   return files.sort();
 }

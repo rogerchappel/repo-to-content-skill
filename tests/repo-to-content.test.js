@@ -1,5 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyzeRepo, buildBrief, runCli, toMarkdown } from '../src/index.js';
@@ -32,6 +34,38 @@ describe('repo-to-content', () => {
   it('keeps launch briefs local-only', async () => {
     const brief = buildBrief(await analyzeRepo(path.join(root, 'fixtures/sample-repo')));
     assert.deepEqual(brief.sideEffects, ['local-filesystem-read']);
+  });
+
+  it('ignores README symlinks to files outside the repository', async (t) => {
+    const fixture = await mkdtemp(path.join(os.tmpdir(), 'repo-to-content-file-symlink-'));
+    const repo = path.join(fixture, 'repo');
+    t.after(() => rm(fixture, { recursive: true, force: true }));
+    await mkdir(repo);
+    await writeFile(path.join(fixture, 'private.md'), 'private launch plan marker\n');
+    await symlink(path.join(fixture, 'private.md'), path.join(repo, 'README.md'));
+
+    const analysis = await analyzeRepo(repo);
+
+    assert.equal(analysis.evidence.readme, false);
+    assert.equal(analysis.description, '');
+    assert.ok(!analysis.files.includes('README.md'));
+  });
+
+  it('does not traverse directory symlinks outside the repository', async (t) => {
+    const fixture = await mkdtemp(path.join(os.tmpdir(), 'repo-to-content-dir-symlink-'));
+    const repo = path.join(fixture, 'repo');
+    const external = path.join(fixture, 'external');
+    t.after(() => rm(fixture, { recursive: true, force: true }));
+    await mkdir(repo);
+    await mkdir(external);
+    await writeFile(path.join(external, 'README.md'), 'private launch plan marker\n');
+    await symlink(external, path.join(repo, 'linked-docs'));
+
+    const analysis = await analyzeRepo(repo);
+
+    assert.equal(analysis.evidence.readme, false);
+    assert.equal(analysis.description, '');
+    assert.deepEqual(analysis.files, []);
   });
 
   it('rejects unsupported CLI formats', async () => {
