@@ -17,7 +17,10 @@ repo-to-content <repo-dir> [--format json|markdown]
 ```
 
 The CLI writes the brief to stdout and warning counts to stderr. It does not post content or modify the repository.
-Unsupported output formats fail with a clear error instead of falling back to another renderer.
+Pass `--help` (or `-h`) to print usage. JSON is the default output format.
+
+Malformed invocations exit nonzero and print a concise error plus usage to stderr. This includes a missing
+`--format` value, formats other than `json` or `markdown`, unknown options, and extra positional arguments.
 
 ## Output
 
