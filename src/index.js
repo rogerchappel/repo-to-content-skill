@@ -1,6 +1,8 @@
 import { lstat, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+const CLI_USAGE = 'Usage: repo-to-content <repo-dir> [--format json|markdown]';
+
 export async function analyzeRepo(repoDir) {
   const root = path.resolve(repoDir);
   const files = await listFiles(root);
@@ -86,11 +88,11 @@ export function toMarkdown(brief) {
 export async function runCli(argv, io) {
   const args = parseArgs(argv);
   if (args.help || !args.repoDir) {
-    io.stdout.write('Usage: repo-to-content <repo-dir> [--format json|markdown]\n');
+    io.stdout.write(`${CLI_USAGE}\n`);
     return;
   }
   if (!['json', 'markdown'].includes(args.format)) {
-    throw new Error(`unsupported format "${args.format}"; expected json or markdown`);
+    throw cliError(`unsupported format "${args.format}"; expected json or markdown`);
   }
   const analysis = await analyzeRepo(path.resolve(io.cwd, args.repoDir));
   const brief = buildBrief(analysis);
@@ -176,9 +178,23 @@ function parseArgs(argv) {
   const args = { format: 'json' };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
-    if (value === '--help' || value === '-h') args.help = true;
-    else if (value === '--format') args.format = argv[++index] ?? 'json';
-    else if (!args.repoDir) args.repoDir = value;
+    if (value === '--help' || value === '-h') return { ...args, help: true };
+    if (value === '--format') {
+      const format = argv[index + 1];
+      if (!format || format.startsWith('-')) throw cliError('missing value for --format');
+      args.format = format;
+      index += 1;
+    } else if (value.startsWith('-')) {
+      throw cliError(`unknown option "${value}"`);
+    } else if (!args.repoDir) {
+      args.repoDir = value;
+    } else {
+      throw cliError(`unexpected argument "${value}"`);
+    }
   }
   return args;
+}
+
+function cliError(message) {
+  return new Error(`${message}\n${CLI_USAGE}`);
 }
