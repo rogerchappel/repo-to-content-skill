@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { analyzeRepo, buildBrief, runCli, toMarkdown } from '../src/index.js';
 
@@ -78,4 +79,50 @@ describe('repo-to-content', () => {
       /unsupported format "html"/
     );
   });
+
+  for (const { name, argv, message } of [
+    { name: 'a missing --format value', argv: ['fixtures/sample-repo', '--format'], message: /missing value for --format/ },
+    { name: 'unknown options', argv: ['fixtures/sample-repo', '--bogus'], message: /unknown option "--bogus"/ },
+    { name: 'unknown options before the repository', argv: ['--bogus', 'fixtures/sample-repo'], message: /unknown option "--bogus"/ },
+    { name: 'extra positional arguments', argv: ['fixtures/sample-repo', 'extra'], message: /unexpected argument "extra"/ }
+  ]) {
+    it(`rejects ${name} through the library API`, async () => {
+      await assert.rejects(
+        () => runCli(argv, {
+          cwd: root,
+          stdout: { write() {} },
+          stderr: { write() {} }
+        }),
+        message
+      );
+    });
+
+    it(`rejects ${name} through the executable CLI`, () => {
+      const result = runExecutable(argv);
+      assert.notEqual(result.status, 0);
+      assert.match(result.stderr, message);
+      assert.match(result.stderr, /Usage: repo-to-content/);
+      assert.equal(result.stdout, '');
+    });
+  }
+
+  for (const { name, argv, output } of [
+    { name: 'the default JSON format', argv: ['fixtures/sample-repo'], output: /^\{/ },
+    { name: 'an explicit JSON format', argv: ['fixtures/sample-repo', '--format', 'json'], output: /^\{/ },
+    { name: 'Markdown format', argv: ['fixtures/sample-repo', '--format', 'markdown'], output: /^# sample-tool launch brief/ },
+    { name: 'help', argv: ['--help'], output: /^Usage: repo-to-content/ }
+  ]) {
+    it(`supports ${name} through the executable CLI`, () => {
+      const result = runExecutable(argv);
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(result.stdout, output);
+    });
+  }
 });
+
+function runExecutable(argv) {
+  return spawnSync(process.execPath, [path.join(root, 'bin/repo-to-content.js'), ...argv], {
+    cwd: root,
+    encoding: 'utf8'
+  });
+}
