@@ -6,10 +6,12 @@ const CLI_USAGE = 'Usage: repo-to-content <repo-dir> [--format json|markdown]';
 export async function analyzeRepo(repoDir) {
   const root = path.resolve(repoDir);
   const files = await listFiles(root);
-  const packageJson = files.includes('package.json')
-    ? await readJsonIfPresent(path.join(root, 'package.json'))
-    : null;
-  const readme = await readFirst(files, root, /^readme\.md$/i);
+  const packageMetadata = files.includes('package.json')
+    ? await readJson(path.join(root, 'package.json'))
+    : { value: null, error: null };
+  const packageJson = packageMetadata.value;
+  const readmeFile = await readFirst(files, root, /^readme\.md$/i);
+  const readme = readmeFile?.content ?? '';
   const docs = files.filter((file) => file.startsWith('docs/'));
   const tests = files.filter((file) => /(^|\/)(test|tests|__tests__)\//.test(file) || /\.(test|spec)\./.test(file));
   const scripts = packageJson?.scripts ?? {};
@@ -21,13 +23,14 @@ export async function analyzeRepo(repoDir) {
     files,
     evidence: {
       readme: Boolean(readme),
+      readmePath: readmeFile?.path ?? null,
       docs,
       tests,
       scripts: Object.keys(scripts)
     },
     claims: buildClaims({ packageJson, readme, docs, tests, scripts }),
     demoCommands: buildDemoCommands(scripts),
-    warnings: buildWarnings({ readme, tests, scripts }),
+    warnings: buildWarnings({ readme, tests, scripts, packageJsonError: packageMetadata.error }),
     readiness: scoreReadiness({ readme, tests, scripts })
   };
 }
@@ -117,8 +120,9 @@ function buildDemoCommands(scripts) {
   return preferred.length ? preferred.map((script) => `npm run ${script}`) : ['Review README for manual demo steps'];
 }
 
-function buildWarnings({ readme, tests, scripts }) {
+function buildWarnings({ readme, tests, scripts, packageJsonError }) {
   const warnings = [];
+  if (packageJsonError) warnings.push(`Invalid package.json; package metadata was ignored: ${packageJsonError}`);
   if (!readme) warnings.push('README evidence missing; avoid usage claims until documented.');
   if (tests.length === 0) warnings.push('No test evidence found; avoid reliability claims.');
   if (!scripts.smoke) warnings.push('No smoke script found; demo command may need manual confirmation.');
@@ -128,7 +132,7 @@ function buildWarnings({ readme, tests, scripts }) {
 
 function proofPaths(analysis) {
   const paths = [];
-  if (analysis.evidence.readme) paths.push('README.md');
+  if (analysis.evidence.readmePath) paths.push(analysis.evidence.readmePath);
   paths.push(...analysis.evidence.docs);
   paths.push(...analysis.evidence.tests);
   if (analysis.evidence.scripts.length > 0) paths.push('package.json');
@@ -136,7 +140,8 @@ function proofPaths(analysis) {
 }
 
 function draftShortPost(analysis) {
-  return `${analysis.name} is ready to try locally: ${analysis.description || 'it now has repo-grounded launch notes'}. Evidence: ${proofPaths(analysis).slice(0, 3).join(', ')}.`;
+  const description = normalizeSentence(analysis.description || 'it now has repo-grounded launch notes');
+  return `${analysis.name} is ready to try locally: ${description} Evidence: ${proofPaths(analysis).slice(0, 3).join(', ')}.`;
 }
 
 function draftTechnicalPost(analysis) {
@@ -157,17 +162,21 @@ async function listFiles(root, prefix = '') {
   return files.sort();
 }
 
-async function readJsonIfPresent(file) {
+async function readJson(file) {
   try {
-    return JSON.parse(await readFile(file, 'utf8'));
-  } catch {
-    return null;
+    return { value: JSON.parse(await readFile(file, 'utf8')), error: null };
+  } catch (error) {
+    return { value: null, error: error instanceof SyntaxError ? error.message : String(error) };
   }
 }
 
 async function readFirst(files, root, pattern) {
   const match = files.find((file) => pattern.test(path.basename(file)));
-  return match ? readFile(path.join(root, match), 'utf8') : '';
+  return match ? { path: match, content: await readFile(path.join(root, match), 'utf8') } : null;
+}
+
+function normalizeSentence(value) {
+  return `${value.trim().replace(/[.!?]+$/, '')}.`;
 }
 
 function firstParagraph(markdown) {

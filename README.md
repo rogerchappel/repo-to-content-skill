@@ -16,7 +16,10 @@ node bin/repo-to-content.js fixtures/sample-repo --format markdown
 repo-to-content <repo-dir> [--format json|markdown]
 ```
 
-The CLI writes the brief to stdout and warning counts to stderr. It does not post content or modify the repository.
+The CLI writes the brief to stdout and warning counts to stderr. Evidence paths name the exact scanned files, so a
+nested README is reported as (for example) `docs/README.md`, not as a root `README.md`. An invalid `package.json`
+is ignored as metadata but produces a review warning in the JSON or Markdown brief and contributes to the stderr
+warning count. The CLI does not post content or modify the repository.
 Pass `--help` (or `-h`) to print usage. JSON is the default output format.
 
 Malformed invocations exit nonzero and print a concise error plus usage to stderr. This includes a missing

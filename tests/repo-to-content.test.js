@@ -23,6 +23,31 @@ describe('repo-to-content', () => {
     assert.ok(brief.proofPaths.includes('README.md'));
     assert.ok(brief.proofPaths.includes('package.json'));
     assert.equal(brief.warnings.length, 0);
+    assert.equal(brief.posts.short, 'sample-tool is ready to try locally: A sample local CLI with evidence-backed docs. Evidence: README.md, docs/usage.md, tests/sample.test.js.');
+  });
+
+  it('cites a nested README by its scanned path without claiming a root README', async (t) => {
+    const repo = await makeRepo(t);
+    await mkdir(path.join(repo, 'docs'));
+    await writeFile(path.join(repo, 'docs/README.md'), '# Docs\n\nDocumentation-only summary.\n');
+
+    const analysis = await analyzeRepo(repo);
+    const brief = buildBrief(analysis);
+
+    assert.equal(analysis.evidence.readme, true);
+    assert.equal(analysis.evidence.readmePath, 'docs/README.md');
+    assert.deepEqual(brief.proofPaths, ['docs/README.md']);
+    assert.ok(brief.proofPaths.every((file) => analysis.files.includes(file)));
+  });
+
+  it('warns when package.json is invalid instead of treating metadata as absent', async (t) => {
+    const repo = await makeRepo(t);
+    await writeFile(path.join(repo, 'package.json'), '{ invalid json');
+
+    const analysis = await analyzeRepo(repo);
+
+    assert.equal(analysis.name, path.basename(repo));
+    assert.match(analysis.warnings[0], /^Invalid package\.json; package metadata was ignored:/);
   });
 
   it('renders markdown output', async () => {
@@ -118,7 +143,25 @@ describe('repo-to-content', () => {
       assert.match(result.stdout, output);
     });
   }
+
+  it('reports invalid package metadata through executable JSON output and stderr', async (t) => {
+    const repo = await makeRepo(t);
+    await writeFile(path.join(repo, 'package.json'), '{ invalid json');
+
+    const result = runExecutable([repo]);
+    const brief = JSON.parse(result.stdout);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(brief.warnings[0], /^Invalid package\.json; package metadata was ignored:/);
+    assert.match(result.stderr, /^4 warning\(s\) need review/);
+  });
 });
+
+async function makeRepo(t) {
+  const repo = await mkdtemp(path.join(os.tmpdir(), 'repo-to-content-fixture-'));
+  t.after(() => rm(repo, { recursive: true, force: true }));
+  return repo;
+}
 
 function runExecutable(argv) {
   return spawnSync(process.execPath, [path.join(root, 'bin/repo-to-content.js'), ...argv], {
