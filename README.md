@@ -22,6 +22,10 @@ is ignored as metadata but produces a review warning in the JSON or Markdown bri
 warning count. The CLI does not post content or modify the repository.
 Pass `--help` (or `-h`) to print usage. JSON is the default output format.
 
+Repository scanning skips dependency, generated-output, and version-control directories so their files cannot
+support claims or raise readiness. The excluded directory names are `.git`, `.hg`, `.svn`, `node_modules`,
+`vendor`, `build`, `dist`, and `coverage`, wherever they occur in the scanned tree.
+
 Malformed invocations exit nonzero and print a concise error plus usage to stderr. This includes a missing
 `--format` value, formats other than `json` or `markdown`, unknown options, and extra positional arguments.
 

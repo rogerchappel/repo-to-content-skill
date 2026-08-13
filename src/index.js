@@ -2,6 +2,16 @@ import { lstat, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const CLI_USAGE = 'Usage: repo-to-content <repo-dir> [--format json|markdown]';
+const SCAN_EXCLUDED_DIRECTORIES = new Set([
+  '.git',
+  '.hg',
+  '.svn',
+  'build',
+  'coverage',
+  'dist',
+  'node_modules',
+  'vendor'
+]);
 
 export async function analyzeRepo(repoDir) {
   const root = path.resolve(repoDir);
@@ -156,8 +166,9 @@ async function listFiles(root, prefix = '') {
     const relative = path.join(prefix, entry);
     const info = await lstat(path.join(root, relative));
     if (info.isSymbolicLink()) continue;
-    if (info.isDirectory()) files.push(...await listFiles(root, relative));
-    else if (info.isFile()) files.push(relative.replaceAll(path.sep, '/'));
+    if (info.isDirectory() && !SCAN_EXCLUDED_DIRECTORIES.has(entry)) {
+      files.push(...await listFiles(root, relative));
+    } else if (info.isFile()) files.push(relative.replaceAll(path.sep, '/'));
   }
   return files.sort();
 }

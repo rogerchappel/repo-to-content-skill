@@ -94,6 +94,62 @@ describe('repo-to-content', () => {
     assert.deepEqual(analysis.files, []);
   });
 
+  it('excludes dependency, generated, and VCS directories from repository evidence', async (t) => {
+    const repo = await makeRepo(t);
+    await writeFile(path.join(repo, 'package.json'), JSON.stringify({
+      name: 'scan-boundary',
+      scripts: { smoke: 'node smoke.js' }
+    }));
+    await mkdir(path.join(repo, 'src'));
+    await writeFile(path.join(repo, 'src/index.js'), 'export const genuine = true;\n');
+
+    for (const directory of ['.git', '.hg', '.svn', 'build', 'coverage', 'dist', 'node_modules', 'vendor']) {
+      await mkdir(path.join(repo, directory, 'docs'), { recursive: true });
+      await mkdir(path.join(repo, directory, 'tests'), { recursive: true });
+      await writeFile(path.join(repo, directory, 'README.md'), '# Excluded README\n\nDependency-only description.\n');
+      await writeFile(path.join(repo, directory, 'docs/usage.md'), 'Excluded documentation.\n');
+      await writeFile(path.join(repo, directory, 'tests/dependency.test.js'), 'throw new Error("not repository evidence");\n');
+    }
+
+    const analysis = await analyzeRepo(repo);
+    const brief = buildBrief(analysis);
+
+    assert.deepEqual(analysis.files, ['package.json', 'src/index.js']);
+    assert.deepEqual(analysis.evidence.docs, []);
+    assert.deepEqual(analysis.evidence.tests, []);
+    assert.equal(analysis.evidence.readme, false);
+    assert.equal(analysis.description, '');
+    assert.equal(analysis.readiness, 1);
+    assert.ok(!analysis.claims.some((claim) => /README|documentation|test-related/.test(claim)));
+    assert.deepEqual(brief.proofPaths, ['package.json']);
+    assert.ok(brief.warnings.includes('README evidence missing; avoid usage claims until documented.'));
+    assert.ok(brief.warnings.includes('No test evidence found; avoid reliability claims.'));
+  });
+
+  for (const format of ['json', 'markdown']) {
+    it(`keeps excluded evidence out of executable ${format} output`, async (t) => {
+      const repo = await makeRepo(t);
+      await mkdir(path.join(repo, 'node_modules/dependency/tests'), { recursive: true });
+      await writeFile(path.join(repo, 'node_modules/dependency/README.md'), '# Dependency docs\n');
+      await writeFile(path.join(repo, 'node_modules/dependency/tests/dep.test.js'), 'dependency test\n');
+      await mkdir(path.join(repo, 'docs'));
+      await writeFile(path.join(repo, 'docs/usage.md'), 'Genuine repository documentation.\n');
+
+      const result = runExecutable([repo, '--format', format]);
+      const output = format === 'json' ? JSON.parse(result.stdout) : result.stdout;
+
+      assert.equal(result.status, 0, result.stderr);
+      assert.doesNotMatch(result.stdout, /node_modules|Dependency docs|dep\.test/);
+      if (format === 'json') {
+        assert.deepEqual(output.proofPaths, ['docs/usage.md']);
+        assert.equal(output.readiness, 0);
+      } else {
+        assert.match(output, /- docs\/usage\.md/);
+        assert.match(output, /Readiness: 0\/3/);
+      }
+    });
+  }
+
   it('rejects unsupported CLI formats', async () => {
     await assert.rejects(
       () => runCli(['fixtures/sample-repo', '--format', 'html'], {

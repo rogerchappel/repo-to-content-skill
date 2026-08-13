@@ -11,3 +11,7 @@ The CLI emits a launch brief object in JSON mode.
 - `posts`: draft short and technical posts.
 - `warnings`: missing evidence notes.
 - `readiness`: score from zero to three.
+
+All file-derived fields use repository evidence only. Files beneath `.git`, `.hg`, `.svn`, `node_modules`,
+`vendor`, `build`, `dist`, or `coverage` directories are excluded from scanning and cannot appear in
+`proofPaths`, support `claims`, suppress `warnings`, or contribute to `readiness`.
