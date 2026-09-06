@@ -39,7 +39,7 @@ export async function analyzeRepo(repoDir) {
       scripts: Object.keys(scripts)
     },
     claims: buildClaims({ packageJson, readme, docs, tests, scripts }),
-    demoCommands: buildDemoCommands(scripts),
+    demoCommands: buildDemoCommands({ scripts, readme }),
     warnings: buildWarnings({ readme, tests, scripts, packageJsonError: packageMetadata.error }),
     readiness: scoreReadiness({ readme, tests, scripts })
   };
@@ -125,9 +125,10 @@ function buildClaims({ packageJson, readme, docs, tests, scripts }) {
   return claims;
 }
 
-function buildDemoCommands(scripts) {
+function buildDemoCommands({ scripts, readme }) {
   const preferred = ['smoke', 'test', 'check', 'build'].filter((script) => scripts[script]);
-  return preferred.length ? preferred.map((script) => `npm run ${script}`) : ['Review README for manual demo steps'];
+  if (preferred.length) return preferred.map((script) => `npm run ${script}`);
+  return readme ? ['Review README for manual demo steps'] : [];
 }
 
 function buildWarnings({ readme, tests, scripts, packageJsonError }) {
@@ -150,12 +151,24 @@ function proofPaths(analysis) {
 }
 
 function draftShortPost(analysis) {
-  const description = normalizeSentence(analysis.description || 'it now has repo-grounded launch notes');
-  return `${analysis.name} is ready to try locally: ${description} Evidence: ${proofPaths(analysis).slice(0, 3).join(', ')}.`;
+  const evidence = proofPaths(analysis).slice(0, 3);
+  if (evidence.length === 0 || analysis.claims.length === 0) {
+    return `${analysis.name} has no repository evidence ready for launch claims.`;
+  }
+  if (!analysis.description) {
+    return `${analysis.name} has repository evidence available. Evidence: ${evidence.join(', ')}.`;
+  }
+  return `${analysis.name} is ready to try locally: ${normalizeSentence(analysis.description)} Evidence: ${evidence.join(', ')}.`;
 }
 
 function draftTechnicalPost(analysis) {
-  return `Built a repo-grounded launch brief for ${analysis.name}. The current evidence supports ${analysis.claims.length} claim(s), with demo flow: ${analysis.demoCommands.join(' && ')}.`;
+  if (analysis.claims.length === 0) {
+    return `No evidence-backed launch brief is available for ${analysis.name} yet.`;
+  }
+  const demoFlow = analysis.demoCommands.length > 0
+    ? `, with demo flow: ${analysis.demoCommands.join(' && ')}`
+    : '';
+  return `Built a repo-grounded launch brief for ${analysis.name}. The current evidence supports ${analysis.claims.length} claim(s)${demoFlow}.`;
 }
 
 async function listFiles(root, prefix = '') {
