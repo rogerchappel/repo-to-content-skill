@@ -26,6 +26,41 @@ describe('repo-to-content', () => {
     assert.equal(brief.posts.short, 'sample-tool is ready to try locally: A sample local CLI with evidence-backed docs. Evidence: README.md, docs/usage.md, tests/sample.test.js.');
   });
 
+  it('uses evidence-safe fallbacks for an empty repository', async (t) => {
+    const repo = await makeRepo(t);
+    const analysis = await analyzeRepo(repo);
+    const brief = buildBrief(analysis);
+
+    assert.equal(analysis.readiness, 0);
+    assert.deepEqual(analysis.claims, []);
+    assert.deepEqual(analysis.demoCommands, []);
+    assert.deepEqual(brief.proofPaths, []);
+    assert.equal(brief.posts.short, `${path.basename(repo)} has no repository evidence ready for launch claims.`);
+    assert.equal(brief.posts.technical, `No evidence-backed launch brief is available for ${path.basename(repo)} yet.`);
+    assert.doesNotMatch(JSON.stringify(brief), /ready to try|launch notes|Evidence: \.|Review README/);
+  });
+
+  for (const format of ['json', 'markdown']) {
+    it(`keeps evidence-empty executable ${format} output internally consistent`, async (t) => {
+      const repo = await makeRepo(t);
+      const result = runExecutable([repo, '--format', format]);
+
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(result.stderr, /^3 warning\(s\) need review/);
+      assert.doesNotMatch(result.stdout, /ready to try|launch notes|Evidence: \.|Review README/);
+      if (format === 'json') {
+        const brief = JSON.parse(result.stdout);
+        assert.equal(brief.readiness, 0);
+        assert.deepEqual(brief.claims, []);
+        assert.deepEqual(brief.proofPaths, []);
+        assert.deepEqual(brief.demoCommands, []);
+      } else {
+        assert.match(result.stdout, /Readiness: 0\/3/);
+        assert.match(result.stdout, /README evidence missing/);
+      }
+    });
+  }
+
   it('cites a nested README by its scanned path without claiming a root README', async (t) => {
     const repo = await makeRepo(t);
     await mkdir(path.join(repo, 'docs'));
