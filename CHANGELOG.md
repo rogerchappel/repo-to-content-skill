@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Avoid readiness claims, empty evidence citations, and missing-README demo guidance when a repository has no usable evidence.
 - Exclude dependency, generated-output, and version-control directories from
   repository evidence, claims, warnings, proof paths, and readiness scoring.
 - Add an installed-tarball smoke check so release verification covers the

@@ -38,6 +38,13 @@ Malformed invocations exit nonzero and print a concise error plus usage to stder
 - Warnings for missing README, tests, or smoke scripts.
 - A readiness score based on README, test, and smoke evidence.
 
+When a repository has no usable evidence, the generated JSON and Markdown keep
+claims, proof paths, and demo commands empty. Draft posts explicitly say that
+no evidence-backed launch brief is available; they do not claim readiness,
+invent launch notes, cite an empty evidence list, or direct readers to a
+missing README. Evidence-backed repositories retain the normal proof-citing
+post and demo wording.
+
 ## Safety notes
 
 - Local filesystem read only.
