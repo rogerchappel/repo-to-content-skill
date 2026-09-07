@@ -8,10 +8,21 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - node-version: 20
+            npm-version: 10
+          - node-version: 24
+            npm-version: 11
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm install --global npm@${{ matrix.npm-version }}
+      - run: node --version && npm --version
       - run: npm ci
       - run: npm run release:check
