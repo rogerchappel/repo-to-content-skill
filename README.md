@@ -68,3 +68,7 @@ bash scripts/validate.sh
 Use `npm run release:check` before publishing or opening a release PR.
 `npm run install:smoke` packs the tarball into a temporary project and runs the
 installed `repo-to-content --help` command.
+
+CI runs that frozen-install release gate at the supported runtime endpoints:
+Node 20 with npm 10 and Node 24 with npm 11. `npm run ci:contract` keeps the
+declared minimum Node version and those matrix endpoints aligned.
