@@ -15,8 +15,9 @@
     "package:smoke": "node scripts/package-smoke.js",
     "install:smoke": "node scripts/install-smoke.js",
     "ci:contract": "node scripts/validate-ci-contract.js",
-    "release:check": "npm run ci:contract && npm run check && npm test && npm run smoke && npm run smoke:json && npm run package:smoke && npm run install:smoke",
-    "lint": "npm run check"
+    "release:check": "npm run ci:contract && npm run check && npm test && npm run smoke && npm run smoke:json && npm run package:smoke && npm run package:contract && npm run install:smoke",
+    "lint": "npm run check",
+    "package:contract": "node scripts/packed-artifact-contract.js"
   },
   "keywords": [
     "agents",
