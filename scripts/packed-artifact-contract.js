@@ -14,6 +14,12 @@ function run(command, args, options = {}) {
   return result;
 }
 
+export function validatePackedContract(files) {
+  for (const required of ['bin/repo-to-content.js', 'src/index.js']) {
+    if (!files.has(required)) throw new Error(`packed artifact is missing ${required}`);
+  }
+}
+
 const root = path.resolve(new URL('..', import.meta.url).pathname);
 const temp = mkdtempSync(path.join(tmpdir(), 'repo-to-content-packed-'));
 let tarballPath;
@@ -23,9 +29,7 @@ try {
   tarballPath = path.join(root, tarball);
   const listing = run('tar', ['-tzf', tarballPath]);
   const files = new Set(listing.stdout.trim().split(/\r?\n/).map((file) => file.replace(/^package\//, '')));
-  for (const required of ['bin/repo-to-content.js', 'src/index.js']) {
-    if (!files.has(required)) throw new Error(`packed artifact is missing ${required}`);
-  }
+  validatePackedContract(files);
 
   run('npm', ['init', '-y', '--silent'], { cwd: temp });
   run('npm', ['install', '--silent', tarballPath], { cwd: temp });
