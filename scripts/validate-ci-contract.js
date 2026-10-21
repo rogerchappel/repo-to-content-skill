@@ -6,6 +6,10 @@ import path from 'node:path';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
 const workflow = readFileSync(path.join(root, '.github/workflows/ci.yml'), 'utf8');
+const releaseCheck = manifest.scripts?.['release:check'];
+assert.ok(releaseCheck, 'package.json must define release:check');
+assert.match(releaseCheck, /npm run package:contract(?:\s|&&|$)/, 'release:check must run the packed artifact contract');
+assert.match(releaseCheck, /npm run install:smoke(?:\s|&&|$)/, 'release:check must run the install smoke test');
 
 const minimumMatch = manifest.engines?.node?.match(/^>=(\d+)$/);
 assert.ok(minimumMatch, 'package.json engines.node must be a simple >= major constraint');
