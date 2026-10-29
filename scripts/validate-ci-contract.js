@@ -10,6 +10,7 @@ const releaseCheck = manifest.scripts?.['release:check'];
 assert.ok(releaseCheck, 'package.json must define release:check');
 assert.match(releaseCheck, /npm run package:contract(?:\s|&&|$)/, 'release:check must run the packed artifact contract');
 assert.match(releaseCheck, /npm run install:smoke(?:\s|&&|$)/, 'release:check must run the install smoke test');
+assert.match(workflow, /^\s+- run:\s*npm run release:check\s*$/m, 'CI must run release:check so all release contracts are enforced');
 
 const minimumMatch = manifest.engines?.node?.match(/^>=(\d+)$/);
 assert.ok(minimumMatch, 'package.json engines.node must be a simple >= major constraint');
