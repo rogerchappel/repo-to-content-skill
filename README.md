@@ -65,9 +65,9 @@ npm run release:check
 bash scripts/validate.sh
 ```
 
-Use `npm run release:check` before publishing or opening a release PR.
-`npm run install:smoke` packs the tarball into a temporary project and runs the
-installed `repo-to-content --help` command.
+Use `npm run release:check` to run the complete release verification workflow before proposing a release. It checks the supported Node/npm CI contract, syntax, tests, CLI smoke outputs, package smoke checks, the packed-artifact contract, and a temporary installed-package smoke test. The workflow does not publish a package.
+
+`npm run package:contract` builds the project and verifies that the generated `dist` output and package file allowlist agree with the packed artifact contract. Run it directly with `npm run package:contract` when investigating packaging changes; on a fresh checkout, it generates `dist` as part of the check, so do not expect generated output to be present before building. `npm run install:smoke` packs the tarball into a temporary project and runs the installed `repo-to-content --help` command.
 
 CI runs that frozen-install release gate at the supported runtime endpoints:
 Node 20 with npm 10 and Node 24 with npm 11. `npm run ci:contract` keeps the
