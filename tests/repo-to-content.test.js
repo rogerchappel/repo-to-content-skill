@@ -185,6 +185,13 @@ describe('repo-to-content', () => {
     });
   }
 
+  it('rejects repeated --format options through the executable CLI', () => {
+    const result = runExecutable(['fixtures/sample-repo', '--format', 'markdown', '--format', 'json']);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /duplicate option "--format"/);
+    assert.match(result.stderr, /Usage: repo-to-content/);
+  });
+
   it('rejects unsupported CLI formats', async () => {
     await assert.rejects(
       () => runCli(['fixtures/sample-repo', '--format', 'html'], {
