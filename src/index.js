@@ -213,6 +213,8 @@ function parseArgs(argv) {
     const value = argv[index];
     if (value === '--help' || value === '-h') return { ...args, help: true };
     if (value === '--format') {
+      if (args.formatSpecified) throw cliError('duplicate option "--format"');
+      args.formatSpecified = true;
       const format = argv[index + 1];
       if (!format || format.startsWith('-')) throw cliError('missing value for --format');
       args.format = format;
