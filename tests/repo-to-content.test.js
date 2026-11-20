@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { analyzeRepo, buildBrief, runCli, toMarkdown } from '../src/index.js';
+import { analyzeRepo, buildBrief, recentCommits, runCli, toMarkdown } from '../src/index.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -16,6 +16,17 @@ describe('repo-to-content', () => {
     assert.equal(analysis.evidence.readme, true);
     assert.equal(analysis.readiness, 3);
     assert.deepEqual(analysis.evidence.scripts.sort(), ['check', 'smoke', 'test']);
+  });
+
+  it('returns bounded recent commit summaries from fixture-backed git history', async (t) => {
+    const repo = await makeRepo(t);
+    const git = (...args) => assert.equal(spawnSync('git', ['-C', repo, ...args], { encoding: 'utf8' }).status, 0);
+    git('init', '-q'); git('config', 'user.name', 'Fixture'); git('config', 'user.email', 'fixture@example.com');
+    await writeFile(path.join(repo, 'evidence.txt'), 'fixture'); git('add', '.');
+    git('commit', '-qm', 'feat: grounded fixture');
+    assert.deepEqual(await recentCommits(repo), ['feat: grounded fixture']);
+    assert.deepEqual(await recentCommits(os.tmpdir()), []);
+    await assert.rejects(() => recentCommits(repo, 0), /limit must/);
   });
 
   it('builds proof-backed content briefs', async () => {
