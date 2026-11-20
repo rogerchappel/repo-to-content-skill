@@ -1,7 +1,11 @@
 import { lstat, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
-const CLI_USAGE = 'Usage: repo-to-content <repo-dir> [--format json|markdown]';
+const execFileAsync = promisify(execFile);
+
+const CLI_USAGE = 'Usage: repo-to-content <repo-dir> [--format json|markdown] [--include-history]';
 const SCAN_EXCLUDED_DIRECTORIES = new Set([
   '.git',
   '.hg',
@@ -43,6 +47,16 @@ export async function analyzeRepo(repoDir) {
     warnings: buildWarnings({ readme, tests, scripts, packageJsonError: packageMetadata.error }),
     readiness: scoreReadiness({ readme, tests, scripts })
   };
+}
+
+export async function recentCommits(repoDir, limit = 5) {
+  if (!Number.isInteger(limit) || limit < 1 || limit > 20) throw new RangeError('limit must be an integer from 1 to 20');
+  try {
+    const { stdout } = await execFileAsync('git', ['-C', path.resolve(repoDir), 'log', `-${limit}`, '--format=%s'], { timeout: 2000, maxBuffer: 65536 });
+    return stdout.split(/\r?\n/).filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 export function scoreReadiness({ readme, tests, scripts }) {
@@ -109,6 +123,7 @@ export async function runCli(argv, io) {
   }
   const analysis = await analyzeRepo(path.resolve(io.cwd, args.repoDir));
   const brief = buildBrief(analysis);
+  if (args.includeHistory) brief.recentCommits = await recentCommits(analysis.repoDir);
   io.stdout.write(args.format === 'json' ? `${JSON.stringify(brief, null, 2)}\n` : toMarkdown(brief));
   if (brief.warnings.length > 0) {
     io.stderr.write(`${brief.warnings.length} warning(s) need review\n`);
@@ -211,7 +226,8 @@ function parseArgs(argv) {
   const args = { format: 'json' };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
-    if (value === '--help' || value === '-h') return { ...args, help: true };
+    if (value === '--include-history') args.includeHistory = true;
+    else if (value === '--help' || value === '-h') return { ...args, help: true };
     if (value === '--format') {
       if (args.formatSpecified) throw cliError('duplicate option "--format"');
       args.formatSpecified = true;
