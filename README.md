@@ -22,6 +22,8 @@ is ignored as metadata but produces a review warning in the JSON or Markdown bri
 warning count. The CLI does not post content or modify the repository.
 Pass `--help` (or `-h`) to print usage. JSON is the default output format.
 
+Repository scanning does not follow symbolic links, including links to directories outside the repository or back to an ancestor. It skips dependency, generated-output, and version-control directories rather than inspecting their contents, while retaining evidence from ordinary project paths. This bounds traversal by the repository’s non-excluded, non-symlink files; it does not impose a fixed file-count or size limit.
+
 Repository scanning skips dependency, generated-output, and version-control directories so their files cannot
 support claims or raise readiness. The excluded directory names are `.git`, `.hg`, `.svn`, `node_modules`,
 `vendor`, `build`, `dist`, and `coverage`, wherever they occur in the scanned tree.
