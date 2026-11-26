@@ -123,6 +123,18 @@ describe('repo-to-content', () => {
     assert.ok(!analysis.files.includes('README.md'));
   });
 
+  it('does not recurse through a directory symlink to an ancestor', async (t) => {
+    const repo = await makeRepo(t);
+    await mkdir(path.join(repo, 'docs'));
+    await writeFile(path.join(repo, 'docs/usage.md'), 'Genuine repository evidence.\\n');
+    await symlink(repo, path.join(repo, 'docs/loop'));
+
+    const analysis = await analyzeRepo(repo);
+
+    assert.deepEqual(analysis.files, ['docs/usage.md']);
+    assert.deepEqual(analysis.evidence.docs, ['docs/usage.md']);
+  });
+
   it('does not traverse directory symlinks outside the repository', async (t) => {
     const fixture = await mkdtemp(path.join(os.tmpdir(), 'repo-to-content-dir-symlink-'));
     const repo = path.join(fixture, 'repo');
